@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consulta de Códigos Netflix</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: #141414;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .contenedor {
+      background-color: #1f1f1f;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 350px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    h2 { margin-top: 0; color: #e50914; text-align: center; }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 4px;
+      background: #333;
+      color: white;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #e50914;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover { background-color: #f40612; }
+    #resultado {
+      margin-top: 20px;
+      text-align: center;
+      padding: 15px;
+      border-radius: 4px;
+      display: none;
+    }
+    .codigo-grande {
+      font-size: 2.5rem;
+      font-weight: bold;
+      letter-spacing: 6px;
+      color: #46d369;
+      margin: 10px 0;
+    }
+    .error { background-color: rgba(229, 9, 20, 0.2); color: #ff6b6b; }
+    .exito { background-color: rgba(70, 211, 105, 0.15); }
+  </style>
+</head>
+<body>
+
+<div class="contenedor">
+  <h2>Acceso a Códigos</h2>
+  <form id="loginForm">
+    <input type="text" id="usuario" placeholder="Usuario" required>
+    <input type="password" id="password" placeholder="Contraseña" required>
+    <button type="submit" id="btnConsultar">Obtener Código</button>
+  </form>
+  <div id="resultado"></div>
+</div>
+
+<script>
+  const URL_API = "https://script.google.com/macros/s/AKfycbwNVWCxKnNThvbDZgDmC4qmdq74JGX48nSAHnSCvT5lnDIQsTY2s0p5jeearQmcXasr/exec";
+
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("btnConsultar");
+    const resDiv = document.getElementById("resultado");
+    
+    btn.disabled = true;
+    btn.textContent = "Buscando en Gmail...";
+    resDiv.style.display = "none";
+
+    const payload = {
+      usuario: document.getElementById("usuario").value,
+      password: document.getElementById("password").value
+    };
+
+    try {
+      const response = await fetch(URL_API, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+
+      resDiv.style.display = "block";
+      if (data.exito) {
+        resDiv.className = "exito";
+        resDiv.innerHTML = `
+          <div>Código de 4 dígitos:</div>
+          <div class="codigo-grande">${data.codigo}</div>
+          <small>${data.asunto}<br>${data.fecha}</small>
+        `;
+      } else {
+        resDiv.className = "error";
+        resDiv.textContent = data.mensaje;
+      }
+    } catch (err) {
+      resDiv.style.display = "block";
+      resDiv.className = "error";
+      resDiv.textContent = "Error de conexión con el servidor.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Obtener Código";
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,127 +1,103 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta de Códigos Netflix</title>
+  <title>Panel de Códigos Netflix</title>
   <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background-color: #141414;
-      color: #ffffff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .contenedor {
-      background-color: #1f1f1f;
-      padding: 2rem;
-      border-radius: 8px;
-      width: 100%;
-      max-width: 350px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-    h2 { margin-top: 0; color: #e50914; text-align: center; }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 4px;
-      background: #333;
-      color: white;
-      box-sizing: border-box;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background-color: #e50914;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:hover { background-color: #f40612; }
-    #resultado {
-      margin-top: 20px;
-      text-align: center;
-      padding: 15px;
-      border-radius: 4px;
-      display: none;
-    }
-    .codigo-grande {
-      font-size: 2.5rem;
-      font-weight: bold;
-      letter-spacing: 6px;
-      color: #46d369;
-      margin: 10px 0;
-    }
-    .error { background-color: rgba(229, 9, 20, 0.2); color: #ff6b6b; }
-    .exito { background-color: rgba(70, 211, 105, 0.15); }
+    body { font-family: Arial, sans-serif; background: #141414; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; box-sizing: border-box; }
+    .card { background: #1f1f1f; padding: 28px; border-radius: 10px; width: 100%; max-width: 380px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+    h2 { margin-top: 0; color: #e50914; text-align: center; margin-bottom: 18px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+    .tab { flex: 1; padding: 10px; background: #2b2b2b; color: #bbb; border: 1px solid #3a3a3a; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; text-align: center; transition: 0.2s; }
+    .tab.active { background: #e50914; color: #fff; border-color: #e50914; }
+    input { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 4px; box-sizing: border-box; background: #333; color: #fff; font-size: 14px; }
+    button.submit-btn { width: 100%; padding: 12px; background: #e50914; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 12px; font-size: 15px; }
+    button.submit-btn:hover { background: #f40612; }
+    button.submit-btn:disabled { background: #666; cursor: not-allowed; }
+    .resultado { margin-top: 20px; text-align: center; }
+    .codigo-box { background: #1b3320; padding: 16px; border-radius: 6px; border: 1px solid #2e6b3b; }
+    .numero { font-size: 34px; font-weight: bold; letter-spacing: 6px; color: #46d369; margin: 6px 0; }
+    .btn-enlace { display: inline-block; margin-top: 10px; padding: 10px 16px; background: #46d369; color: #000; text-decoration: none; font-weight: bold; border-radius: 4px; font-size: 14px; }
+    .btn-enlace:hover { background: #5ce67d; }
+    .meta { font-size: 12px; color: #ccc; margin-top: 8px; }
+    .error { color: #ff6b6b; font-size: 14px; }
   </style>
 </head>
 <body>
+  <div class="card">
+    <h2>Acceso a Códigos</h2>
 
-<div class="contenedor">
-  <h2>Acceso a Códigos</h2>
-  <form id="loginForm">
+    <div class="tabs">
+      <div class="tab active" id="tab-acceso" onclick="seleccionarTipo('acceso')">Código 4 Dígitos</div>
+      <div class="tab" id="tab-hogar" onclick="seleccionarTipo('hogar')">Código de Hogar</div>
+    </div>
+
     <input type="text" id="usuario" placeholder="Usuario" required>
     <input type="password" id="password" placeholder="Contraseña" required>
-    <button type="submit" id="btnConsultar">Obtener Código</button>
-  </form>
-  <div id="resultado"></div>
-</div>
+    <button class="submit-btn" onclick="consultar()" id="btnConsultar">Obtener Código de Acceso</button>
 
-<script>
-  const URL_API = "https://script.google.com/macros/s/AKfycbwsjzqSLzsvyy8YPWEv5-6bjcGJjgSA689g9-ufeiHTohzeCra05YpgrPWRVHsrVWPm/exec";
+    <div class="resultado" id="resultado"></div>
+  </div>
 
-  document.getElementById("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById("btnConsultar");
-    const resDiv = document.getElementById("resultado");
-    
-    btn.disabled = true;
-    btn.textContent = "Buscando en Gmail...";
-    resDiv.style.display = "none";
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsjzqSLzsvyy8YPWEv5-6bjcGJjgSA689g9-ufeiHTohzeCra05YpgrPWRVHsrVWPm/exec";
+    let tipoSeleccionado = "acceso";
 
-    const payload = {
-      usuario: document.getElementById("usuario").value,
-      password: document.getElementById("password").value
-    };
-
-    try {
-      const response = await fetch(URL_API, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-
-      resDiv.style.display = "block";
-      if (data.exito) {
-        resDiv.className = "exito";
-        resDiv.innerHTML = `
-          <div>Código de 4 dígitos:</div>
-          <div class="codigo-grande">${data.codigo}</div>
-          <small>${data.asunto}<br>${data.fecha}</small>
-        `;
-      } else {
-        resDiv.className = "error";
-        resDiv.textContent = data.mensaje;
-      }
-    } catch (err) {
-      resDiv.style.display = "block";
-      resDiv.className = "error";
-      resDiv.textContent = "Error de conexión con el servidor.";
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Obtener Código";
+    function seleccionarTipo(tipo) {
+      tipoSeleccionado = tipo;
+      document.getElementById("tab-acceso").classList.toggle("active", tipo === "acceso");
+      document.getElementById("tab-hogar").classList.toggle("active", tipo === "hogar");
+      document.getElementById("btnConsultar").textContent =
+        tipo === "hogar" ? "Obtener Código de Hogar" : "Obtener Código de Acceso";
+      document.getElementById("resultado").innerHTML = "";
     }
-  });
-</script>
 
+    async function consultar() {
+      const usuario = document.getElementById("usuario").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const resDiv = document.getElementById("resultado");
+      const btn = document.getElementById("btnConsultar");
+
+      if (!usuario || !password) {
+        resDiv.innerHTML = "<p class='error'>Ingresa usuario y contraseña.</p>";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Buscando...";
+      resDiv.innerHTML = "";
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ usuario, password, tipo: tipoSeleccionado })
+        });
+        const data = await response.json();
+
+        if (!data.exito) {
+          resDiv.innerHTML = `<p class='error'>${data.mensaje}</p>`;
+        } else {
+          let contenido = `<div class="codigo-box">`;
+          if (data.codigo) {
+            contenido += `<div style="font-size:13px;color:#ccc;">Código de 4 dígitos:</div>
+                          <div class="numero">${data.codigo}</div>`;
+          }
+          if (data.enlace) {
+            contenido += `<a href="${data.enlace}" target="_blank" class="btn-enlace">Confirmar Hogar Netflix</a>`;
+          }
+          contenido += `<div class="meta">${data.asunto}<br>${data.fecha}</div></div>`;
+          resDiv.innerHTML = contenido;
+        }
+      } catch (err) {
+        resDiv.innerHTML = "<p class='error'>Error de conexión con el servidor.</p>";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = tipoSeleccionado === "hogar" ? "Obtener Código de Hogar" : "Obtener Código de Acceso";
+      }
+    }
+  </script>
 </body>
 </html>
